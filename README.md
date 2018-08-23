@@ -1,6 +1,6 @@
 # hs-ledger-address
 
-This tool will allow you to use **Ledger device** to generate [Handshake][handshake] addresss.
+This tool will allow you to use **Ledger device** to generate [Handshake][handshake] addresses.
 Even though this won't allow you to sign transactions, this is safe way to generate/backup and get addresses for handshake.
 
 You can use this tool with `ledger bitcoin app`. In the future you should be able to use ledger Handshake ledger app, using same seed.
