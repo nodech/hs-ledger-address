@@ -1,0 +1,32 @@
+{
+  "name": "hs-ledger-address",
+  "version": "0.0.0",
+  "description": "Generate handshake address using ledger",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nodar-chkuaselidze/hs-ledger-address.git"
+  },
+  "keywords": [
+    "handshake",
+    "ledger"
+  ],
+  "author": "Nodari Chkuaselidze",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nodar-chkuaselidze/hs-ledger-address/issues"
+  },
+  "homepage": "https://github.com/nodar-chkuaselidze/hs-ledger-address#readme",
+  "bin": {
+    "hs-ledger-address": "./bin/ledger-address"
+  },
+  "dependencies": {
+    "bcfg": "^0.1.2",
+    "bledger": "^0.1.1",
+    "bsert": "0.0.4",
+    "hsd": "handshake-org/hsd#master"
+  }
+}

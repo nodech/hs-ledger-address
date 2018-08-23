@@ -1,0 +1,9 @@
+build/
+docs/
+node_modules/
+npm-debug.log
+app.js
+coverage/
+
+.config/certs/*
+!.config/certs/.keep

@@ -1,0 +1,195 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const bledger = require('bledger');
+const assert = require('bsert');
+const Config = require('bcfg');
+const KeyRing = require('hsd/lib/primitives/keyring');
+const HDPublicKey = require('hsd/lib/hd/public');
+const {LedgerBcoin} = bledger;
+const {Device} = bledger.HID;
+
+
+const PURPOSE = 44;
+const COIN_TYPE = {
+  'main': 5353,
+  'testnet': 5354,
+  'regtest': 5355,
+  'simnet': 5356
+};
+
+class CLI {
+  constructor() {
+    this.config = new Config('hsd', {
+      suffix: 'network',
+      fallback: 'main',
+      alias: {
+        'n': 'network',
+      }
+    });
+
+    this.config.load({
+      argv: true,
+      env: true
+    });
+
+    this.network = this.config.str('network', 'main');
+    this.argv = this.config.argv;
+    this.help = this.config.bool(['help', 'h', '?'], false);
+    this.timeout = this.config.int(['timeout', 't'], 5000);
+
+    this.device = null;
+    this.ledgerApp = null;
+  }
+
+  log(json) {
+    if (typeof json === 'string')
+      return console.log.apply(console, arguments);
+    return console.log(JSON.stringify(json, null, 2));
+  }
+
+  async open() {
+    if (this.help || this.argv[0] === 'help' || this.argv.length === 0) {
+      usage();
+      return;
+    }
+
+    switch(this.argv[0]) {
+      case 'devices': {
+        await this.printDevices();
+        break;
+      }
+
+      case 'address': {
+        await this.openLedger();
+        await this.getAddress();
+        break;
+      }
+
+      case 'xpub': {
+        await this.openLedger();
+        await this.printXPUB();
+        break;
+      }
+
+      default:
+        throw new Error('Unknown command');
+    }
+
+  }
+
+  async printDevices() {
+    const devices = await Device.getDevices();
+
+    assert(devices.length > 0, 'Ledger devices not found.');
+
+    for (const device of devices) {
+      this.log('Ledger: ', device.path);
+      this.log('  Product name:', device.productName);
+      this.log('  Product Id:', device.productId);
+      this.log('  Product Vendor:', device.vendorId);
+    }
+  }
+
+  async getDevice() {
+    const devices = await Device.getDevices();
+
+    assert(devices.length > 0, 'Ledger device not found.');
+
+    // No clue how they will be sorted on each OS. So keep it simple.
+    assert(devices.length === 1, 'Please keep only one ledger connected.');
+
+    return devices[0];
+  }
+
+  async openLedger() {
+    const device = await this.getDevice();
+
+    this.device = new Device({
+      device: device,
+      timeout: this.timeout
+    });
+
+    this.ledgerApp = new LedgerBcoin({ device: this.device });
+
+    await this.device.open();
+  }
+
+  async getXPUB() {
+    const account = this.config.int(1, 0);
+    const coinType = COIN_TYPE[this.network];
+
+    assert(coinType, `Network "${this.network}" is not correct.`);
+    const path = `m/${PURPOSE}'/${coinType}'/${account}'`;
+    const bcoinPubkey = await this.ledgerApp.getPublicKey(path);
+
+    return {
+      path: path,
+      pubkey: bcoinPubkey
+    };
+  }
+
+  async printXPUB() {
+    const {pubkey, path} = await this.getXPUB();
+
+    this.log(`Using network "${this.network}".`);
+    this.log(`XPUB path ${path}.`);
+    this.log(`Xpub for watch-only wallets: ${pubkey.xpubkey(this.network)}`);
+  }
+
+  async getAddress() {
+    const {pubkey, path} = await this.getXPUB();
+
+    const deriveReceive = pubkey.derive(0).derive(0);
+    const ring = KeyRing.fromPublic(deriveReceive.publicKey, this.network);
+    const address = ring.getAddress().toString(this.network);
+
+    this.log(`Using derivation path: ${path}/0/0`);
+    this.log(`First receive address: ${address}.`);
+  }
+
+  async destroy() {
+    if (this.device)
+      await this.device.close();
+  }
+}
+
+(async () => {
+  const cli = new CLI();
+
+  await cli.open();
+  await cli.destroy();
+})().catch((e) => {
+  usage(e);
+  process.exit(1);
+});
+
+function usage(err) {
+  const errMessage = err ? err.message : '';
+  const msg =
+  `hs-ledger-address: ${errMessage}
+  Usage:
+    $ hs-ledger-address address [account=0] - Get address for the account.
+    $ hs-ledger-address xpub [account=0] - Get xpub for the account.
+    $ hs-ledger-address devices - List all ledger devices
+    $ hs-ledger-address help - Shows this message.
+
+  Options:
+    -n, --network <network> (default "main")
+    -h, -?, --help - Shows this message
+    -t, --timeout (default 5000) - Ledger timeout
+
+  NOTE: Handshake uses same type of private keys as Bitcoin, so
+  private key generation can happen within Ledger Bitcoin App.
+  They will be used to generate addresses for HSK. Please always
+  backup your private keys even on ledger.
+  `
+
+  if (err != null) {
+    console.error(msg);
+    return;
+  }
+
+  console.log(msg);
+}
