@@ -10,7 +10,6 @@ const HDPublicKey = require('hsd/lib/hd/public');
 const {LedgerBcoin} = bledger;
 const {Device} = bledger.HID;
 
-
 const PURPOSE = 44;
 const COIN_TYPE = {
   'main': 5353,
@@ -134,7 +133,7 @@ class CLI {
     const {pubkey, path} = await this.getXPUB();
 
     this.log(`Using network "${this.network}".`);
-    this.log(`XPUB path ${path}.`);
+    this.log(`Xpub path ${path}.`);
     this.log(`Xpub for watch-only wallets: ${pubkey.xpubkey(this.network)}`);
   }
 
@@ -146,7 +145,7 @@ class CLI {
     const address = ring.getAddress().toString(this.network);
 
     this.log(`Using derivation path: ${path}/0/0`);
-    this.log(`First receive address: ${address}.`);
+    this.log(`First receive address: ${address}`);
   }
 
   async destroy() {
