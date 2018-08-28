@@ -183,7 +183,7 @@ function usage(err) {
   so private key generation can happen within the Ledger Bitcoin app. Because
   Ledger devices are BIP44 compliant, this tool is able to specify a path in
   the HD tree that is specific to Handshake addresses. It is recommended to use
-  the first Handshake account by specifying `0` as your account no.
+  the first Handshake account by specifying '0' as your account no.
   `
 
   if (err != null) {

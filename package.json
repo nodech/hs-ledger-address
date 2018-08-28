@@ -1,6 +1,6 @@
 {
   "name": "hs-ledger-address",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Generate handshake address using ledger",
   "main": "index.js",
   "scripts": {
